@@ -4,7 +4,7 @@
       android:versionCode="1"
       android:versionName="1.0">
 
-    <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="15"/>
+    <uses-sdk android:minSdkVersion="10" android:targetSdkVersion="10"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -17,8 +17,7 @@
 
     <application android:label="Latency" android:icon="@drawable/ic_launcher">
         <activity android:name=".SettingsActivity"
-                  android:label="Latency"
-                  android:theme="@android:style/Theme.Holo.Light">
+                  android:label="Latency">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

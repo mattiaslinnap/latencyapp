@@ -22,7 +22,7 @@ public class Logger {
     }
 
     private static synchronized void append(Context context, String message) {
-        String name = SettingsFragment.getName(context);
+        String name = SettingsActivity.getName(context);
         String line = String.format("%s %s: %s\n", name, App.timeString(System.currentTimeMillis()), message);
         Log.i(App.TAG, line);
 

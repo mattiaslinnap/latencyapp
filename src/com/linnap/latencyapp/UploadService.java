@@ -12,9 +12,11 @@ import org.apache.commons.io.IOUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Random;
 
 public class UploadService extends IntentService {
 
@@ -36,7 +38,7 @@ public class UploadService extends IntentService {
         try {
             File file = Logger.getFile(this);
             if (file.exists()) {
-                doUpload(file, SettingsFragment.getName(this));
+                doUpload(file, SettingsActivity.getName(this));
                 setStatus("Success.");
             } else {
                 setStatus("No log file.");
@@ -50,18 +52,22 @@ public class UploadService extends IntentService {
     }
 
     private void doUpload(File file, String name) throws IOException {
+        System.setProperty("http.keepAlive", "false");
         HttpURLConnection connection = (HttpURLConnection)getUrl(name).openConnection();
         try {
             connection.setUseCaches(false);
             connection.setRequestProperty("User-Agent", "LatencyApp");
             connection.setRequestProperty("Accept-Charset", App.UTF8);
+            connection.setRequestProperty("Accept-Encoding", "identity");
+            connection.setRequestProperty("Connection", "close");
             connection.setConnectTimeout(30 * 1000);
             connection.setReadTimeout(30 * 1000);
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
             connection.setFixedLengthStreamingMode((int)file.length());
-            FileUtils.copyFile(file, connection.getOutputStream());
-            connection.getOutputStream().flush();
+            OutputStream out = connection.getOutputStream();
+            FileUtils.copyFile(file, out);
+            out.flush();
 
             int status = connection.getResponseCode();
             boolean error = status >= 400;
@@ -70,8 +76,10 @@ public class UploadService extends IntentService {
 
             if (error)
                 throw new IOException("Response status " + status);
+            if (responseText == null)
+                throw new IOException(String.format("Response is null (status %d)", status));
             if (TextUtils.isEmpty(responseText))
-                throw new IOException("Response is empty");
+                throw new IOException(String.format("Response is empty (status %d)", status));
 
             if ("OK".equals(responseText)) {
                 file.delete();  // Race condition, but don't care.
@@ -84,7 +92,7 @@ public class UploadService extends IntentService {
     }
 
     private URL getUrl(String name) throws MalformedURLException {
-        return new URL(String.format("http://ping.yousense.org/upload/%s/", name));
+        return new URL(String.format("http://ping.yousense.org/upload/%s/?random=%d", name, new Random().nextInt(10000)));
     }
 
     private static void setStatus(String message) {

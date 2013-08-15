@@ -17,14 +17,14 @@ import java.net.URL;
 public class PingService extends IntentService {
 
     private static final int RESPONSE_SIZE = 5000;
-    private static long lastStart;
+
+    private static String status = "";
+    public static String getStatus() {
+        return status;
+    }
 
     public static void startPing(Context context) {
         context.startService(new Intent(context, PingService.class));
-    }
-
-    public static long getLastStart() {
-        return lastStart;
     }
 
     public PingService() {
@@ -35,16 +35,17 @@ public class PingService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.d(App.TAG, "PingService woke up.");
         long start = System.currentTimeMillis();
-        lastStart = start;
 
         try {
             try {
                 doPing();
                 long delay = System.currentTimeMillis() - start;
                 Logger.logPingSuccess(this, RESPONSE_SIZE, start, delay);
+                setStatus("Success.");
             } catch (IOException e) {
                 e.printStackTrace();
                 Logger.logPingFailure(this, e, start);
+                setStatus("Failed: " + e.toString());
             }
         } finally {
             StaticWakeLock.getInstance(this).release();
@@ -53,11 +54,14 @@ public class PingService extends IntentService {
     }
 
     private void doPing() throws IOException {
+        System.setProperty("http.keepAlive", "false");
         HttpURLConnection connection = (HttpURLConnection)getUrl(RESPONSE_SIZE).openConnection();
         try {
             connection.setUseCaches(false);
             connection.setRequestProperty("User-Agent", "LatencyApp");
             connection.setRequestProperty("Accept-Charset", App.UTF8);
+            connection.setRequestProperty("Accept-Encoding", "identity");
+            connection.setRequestProperty("Connection", "close");
             connection.setConnectTimeout(30 * 1000);
             connection.setReadTimeout(30 * 1000);
             connection.setRequestMethod("GET");
@@ -69,8 +73,10 @@ public class PingService extends IntentService {
 
             if (error)
                 throw new IOException("Response status " + status);
+            if (responseText == null)
+                throw new IOException(String.format("Response is null (status %d)", status));
             if (TextUtils.isEmpty(responseText))
-                throw new IOException("Response is empty");
+                throw new IOException(String.format("Response is empty (status %d)", status));
             if (responseText.length() != RESPONSE_SIZE)
                 throw new IOException(String.format("Response size is %d, expected %d", responseText.length(), RESPONSE_SIZE));
         } finally {
@@ -82,4 +88,7 @@ public class PingService extends IntentService {
         return new URL(String.format("http://ping.yousense.org/ping/%d/", responseSize));
     }
 
+    private static void setStatus(String message) {
+        status = App.timeString(System.currentTimeMillis()) + ": " + message;
+    }
 }
