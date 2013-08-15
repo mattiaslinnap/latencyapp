@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Config">
+        <EditTextPreference android:key="prefs_name"
+                            android:title="Phone name"
+                            android:defaultValue="Unset" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Control">
+        <Preference android:key="prefs_start_ping"
+                    android:title="Start Ping"
+                    android:persistent="false" />
+        <Preference android:key="prefs_stop_ping"
+                    android:title="Stop Ping"
+                    android:persistent="false" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Upload">
+        <Preference android:key="prefs_upload"
+                    android:title="Upload Log Now"
+                    android:persistent="false" />
+    </PreferenceCategory>
+</PreferenceScreen>
